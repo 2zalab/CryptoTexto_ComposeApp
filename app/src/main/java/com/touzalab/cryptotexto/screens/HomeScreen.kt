@@ -87,6 +87,20 @@ fun HomeScreen(navController: NavController) {
                         }
                         context.startActivity(Intent.createChooser(shareIntent, "Partager via"))
                         scope.launch { drawerState.close() }
+                    },
+                    onGitHub = {
+                        val intent = Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/2zalab/CryptoTexto_ComposeApp"))
+                        context.startActivity(intent)
+                        scope.launch { drawerState.close() }
+                    },
+                    onAbout = {
+                        navController.navigate(Screen.About.route)
+                        scope.launch { drawerState.close() }
+                    },
+                    onDeveloper = {
+                        navController.navigate(Screen.Developer.route)
+                        scope.launch { drawerState.close() }
                     }
                 )
             }
@@ -219,7 +233,11 @@ private fun DrawerContent(
     onNavigateToDecryption: () -> Unit,
     onRateApp: () -> Unit,
     onOtherApps: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onGitHub: () -> Unit,
+    onDeveloper: () -> Unit,
+    onAbout: () -> Unit
+
 ) {
     Column(
         modifier = Modifier
@@ -256,7 +274,7 @@ private fun DrawerContent(
         )
 
         DrawerItem(
-            icon = Icons.Default.Menu,
+            icon = Icons.Default.List,
             text = "Autres applications",
             onClick = onOtherApps
         )
@@ -265,6 +283,45 @@ private fun DrawerContent(
             icon = Icons.Default.Share,
             text = "Partager",
             onClick = onShare
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        // Nouvelles options
+        DrawerItem(
+            icon = Icons.Default.Info,
+            text = "À propos",
+            onClick = onAbout
+        )
+
+        DrawerItem(
+            icon = Icons.Outlined.Settings,
+            text = "GitHub",
+            onClick = onGitHub
+        )
+
+        DrawerItem(
+            icon = Icons.Default.Person,
+            text = "Développeur",
+            onClick = onDeveloper
+        )
+
+        DrawerItem(
+            icon = Icons.Default.Build,
+            text = "Version 1.0",
+            onClick = {}
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Footer avec copyright
+        Text(
+            text = "© 2025 2zaLab\nTous droits réservés",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         )
     }
 }

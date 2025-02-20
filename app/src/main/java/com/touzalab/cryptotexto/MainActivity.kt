@@ -20,7 +20,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.touzalab.cryptotexto.components.OnboardingPreferences
 import com.touzalab.cryptotexto.navigation.Screen
+import com.touzalab.cryptotexto.screens.AboutScreen
 import com.touzalab.cryptotexto.screens.DecryptionScreen
+import com.touzalab.cryptotexto.screens.DeveloperScreen
 import com.touzalab.cryptotexto.screens.EncryptionScreen
 import com.touzalab.cryptotexto.screens.HomeScreen
 import com.touzalab.cryptotexto.screens.OnboardingScreen
@@ -67,6 +69,12 @@ fun CryptoTextoApp(startDestination: String) {
         }
         composable(Screen.Decryption.route) {
             DecryptionScreen(navController = navController)
+        }
+        composable(Screen.About.route) {
+            AboutScreen(navController = navController)
+        }
+        composable(Screen.Developer.route) {
+            DeveloperScreen(navController = navController)
         }
     }
 }
