@@ -5,6 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.*
@@ -62,7 +66,8 @@ fun CryptoInputFields(
     affineA: Int ,
     onAffineAChange: (Int) -> Unit,
     affineB: Int,
-    onAffineBChange: (Int) -> Unit
+    onAffineBChange: (Int) -> Unit,
+    onLoadSavedKey: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -133,8 +138,28 @@ fun CryptoInputFields(
             affineB = affineB,
             onAffineBChange = onAffineBChange
         )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        TextButton(
+            onClick = onLoadSavedKey,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Key,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Charger une clé sauvegardée")
+            }
+        }
     }
 }
+
 
 @Composable
 fun CryptoKeyInput(
@@ -213,10 +238,8 @@ fun CryptoKeyInput(
                 },
                 trailingIcon = {
                     IconButton(onClick = { showPassword = !showPassword }) {
-                        Image(
-                            painter = painterResource(
-                                id = if (showPassword) R.drawable.visibility_off else R.drawable.visibility
-                            ),
+                        Icon(
+                            imageVector = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                             contentDescription = if (showPassword) "Masquer la clé" else "Afficher la clé",
                             modifier = Modifier.size(24.dp)
                         )
@@ -336,10 +359,10 @@ fun CryptoActionButtons(
             onClick = onCopy,
             modifier = Modifier.size(48.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.baseline_content_copy_24),
+            Icon(
+                imageVector = Icons.Default.ContentCopy,
                 contentDescription = "Copier",
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                tint =MaterialTheme.colorScheme.primary
             )
         }
 

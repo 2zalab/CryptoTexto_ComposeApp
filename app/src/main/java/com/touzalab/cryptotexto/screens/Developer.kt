@@ -8,6 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Facebook
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -115,7 +121,7 @@ fun DeveloperScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             SocialLink(
-                icon = R.drawable.baseline_attach_email_24,
+                icon = Icons.Default.Email,
                 text = "isaac_touza@outlook.fr",
                 onClick = {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -126,7 +132,7 @@ fun DeveloperScreen(navController: NavController) {
             )
 
             SocialLink(
-                icon =  R.drawable.baseline_phone_iphone_24,
+                icon =  Icons.Default.PhoneIphone,
                 text = "+237 691 80 53 21",
                 onClick = {
                     val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -137,7 +143,18 @@ fun DeveloperScreen(navController: NavController) {
             )
 
             SocialLink(
-                icon =  R.drawable.baseline_link_24,
+                icon =  Icons.Default.Facebook,
+                text = "Facebook",
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("https://facebook.com/touza.isaac")
+                    }
+                    context.startActivity(intent)
+                }
+            )
+
+            SocialLink(
+                icon =  Icons.Default.Link,
                 text = "GitHub",
                 onClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -194,7 +211,7 @@ fun DeveloperScreen(navController: NavController) {
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_apps_24),
+                            imageVector = Icons.Default.Apps,
                             colorFilter = ColorFilter.tint(color = Color.White),
                             contentDescription = null
                         )
@@ -209,7 +226,7 @@ fun DeveloperScreen(navController: NavController) {
 
 @Composable
 private fun SocialLink(
-     @DrawableRes icon: Int,
+    icon: ImageVector,
     text: String,
     onClick: () -> Unit
 ) {
@@ -230,7 +247,7 @@ private fun SocialLink(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = icon),
+                imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)

@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,14 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.touzalab.cryptotexto.components.BiometricHelper
 import com.touzalab.cryptotexto.components.CryptoActionButtons
 import com.touzalab.cryptotexto.components.CryptoInputFields
 import com.touzalab.cryptotexto.components.CryptoOperation
 import com.touzalab.cryptotexto.components.CryptoResultCard
 import com.touzalab.cryptotexto.components.CryptoTopBar
 import com.touzalab.cryptotexto.components.CryptoViewModel
+import com.touzalab.cryptotexto.components.CryptoViewModelFactory
+import com.touzalab.cryptotexto.components.SavedKeysDialog
+import com.touzalab.cryptotexto.components.SecretKeysDataStore
 import com.touzalab.cryptotexto.components.areCoprimes
 import com.touzalab.cryptotexto.ui.*
 
@@ -30,12 +36,27 @@ import com.touzalab.cryptotexto.ui.*
 fun EncryptionScreen(
     navController: NavController,
 ) {
-    val viewModel: CryptoViewModel = viewModel()
-    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val dataStore = remember { SecretKeysDataStore(context) }
+    val viewModel: CryptoViewModel = viewModel(
+        factory = CryptoViewModelFactory(dataStore, context)
+    )
+    val state by viewModel.state.collectAsState()
     val algorithms = remember { listOf("Cesar", "Vigenère", "Affine", "Transposition") }
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val showLoadKeyDialog by viewModel.showLoadKeyDialog.collectAsState()
+    val savedKeys by viewModel.savedKeys.collectAsState()
+
+    val activity = remember {
+        when (context) {
+            is FragmentActivity -> context
+            else -> throw IllegalStateException("L'activité doit être une FragmentActivity")
+        }
+    }
+    val biometricHelper = remember { BiometricHelper(activity) }
+
 
     LaunchedEffect(state.showSnackbar) {
         if (state.showSnackbar) {
@@ -86,7 +107,18 @@ fun EncryptionScreen(
                 affineA = state.affineA,
                 onAffineAChange = { viewModel.updateAffineA(it) },
                 affineB = state.affineB,
-                onAffineBChange = { viewModel.updateAffineB(it) }
+                onAffineBChange = { viewModel.updateAffineB(it) },
+                onLoadSavedKey = {
+                    biometricHelper.showBiometricPrompt(
+                        onSuccess = {
+                            viewModel.loadSavedKeys(state.selectedAlgorithm)
+                            viewModel.showLoadKeyDialog()
+                        },
+                        onError = { code, message ->
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
             )
 
             Button(
@@ -144,5 +176,13 @@ fun EncryptionScreen(
                 }
             )
         }
+        if (showLoadKeyDialog) {
+            SavedKeysDialog(
+                keys = savedKeys,
+                onDismiss = { viewModel.hideLoadKeyDialog() },
+                onKeySelected = { viewModel.loadSelectedKey(it) }
+            )
+        }
+
     }
 }

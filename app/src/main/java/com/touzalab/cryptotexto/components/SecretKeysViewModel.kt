@@ -6,12 +6,18 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.itextpdf.text.Document
+import com.itextpdf.text.Paragraph
+import com.itextpdf.text.pdf.PdfWriter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 
 data class SecretKey(
@@ -39,6 +45,19 @@ class SecretKeysViewModel(
     private val _state = MutableStateFlow(SecretKeysState())
     val state: StateFlow<SecretKeysState> = _state.asStateFlow()
     val algorithms =  listOf("Cesar", "Vigenère", "Affine", "Transposition")
+
+    private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val exportState: StateFlow<ExportState> = _exportState.asStateFlow()
+
+
+    sealed class ExportState {
+        object Idle : ExportState()
+        object Loading : ExportState()
+        data class Success(val filePath: String) : ExportState()
+        data class Error(val message: String) : ExportState()
+    }
+
+
 
     init {
         loadSecretKeys()
@@ -160,6 +179,65 @@ class SecretKeysViewModel(
             }
         }
     }
+
+    fun exportKeys(format: String) {
+        viewModelScope.launch {
+            try {
+                _exportState.value = ExportState.Loading
+
+                val content = buildString {
+                    appendLine("Liste des clés secrètes")
+                    appendLine("=====================")
+                    appendLine()
+
+                    state.value.secretKeys.forEach { key ->
+                        appendLine("Algorithme: ${key.algorithm}")
+                        appendLine("Description: ${key.description}")
+                        appendLine("Clé: ${key.key}")
+                        appendLine("---------------------")
+                    }
+                }
+
+                val fileName = "cles_secretes_${System.currentTimeMillis()}"
+                val file = when (format) {
+                    "pdf" -> createPdfFile(fileName, content)
+                    "txt" -> createTextFile(fileName, content)
+                    else -> throw IllegalArgumentException("Format non supporté")
+                }
+
+                _exportState.value = ExportState.Success(file.absolutePath)
+                _state.update { it.copy(
+                    message = "Fichier exporté avec succès",
+                    showMessage = true
+                ) }
+            } catch (e: Exception) {
+                _exportState.value = ExportState.Error(e.message ?: "Erreur lors de l'export")
+                _state.update { it.copy(
+                    error = "Erreur lors de l'export : ${e.message}",
+                    showMessage = true
+                ) }
+            }
+        }
+    }
+
+    private fun createPdfFile(fileName: String, content: String): File {
+        val document = Document()
+        val file = File(context.getExternalFilesDir(null), "$fileName.pdf")
+        PdfWriter.getInstance(document, FileOutputStream(file))
+
+        document.open()
+        document.add(Paragraph(content))
+        document.close()
+
+        return file
+    }
+
+    private fun createTextFile(fileName: String, content: String): File {
+        val file = File(context.getExternalFilesDir(null), "$fileName.txt")
+        file.writeText(content)
+        return file
+    }
+
 }
 
 // Factory pour créer le ViewModel avec le DataStore
@@ -175,3 +253,4 @@ class SecretKeysViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
+

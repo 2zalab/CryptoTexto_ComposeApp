@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,15 +28,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.touzalab.cryptotexto.R
+import com.touzalab.cryptotexto.components.BiometricHelper
 import com.touzalab.cryptotexto.components.CryptoActionButtons
 import com.touzalab.cryptotexto.components.CryptoInputFields
 import com.touzalab.cryptotexto.components.CryptoOperation
 import com.touzalab.cryptotexto.components.CryptoResultCard
 import com.touzalab.cryptotexto.components.CryptoTopBar
 import com.touzalab.cryptotexto.components.CryptoViewModel
+import com.touzalab.cryptotexto.components.CryptoViewModelFactory
+import com.touzalab.cryptotexto.components.SavedKeysDialog
+import com.touzalab.cryptotexto.components.SecretKeysDataStore
 import com.touzalab.cryptotexto.components.areCoprimes
 import com.touzalab.cryptotexto.ui.*
 
@@ -40,12 +50,26 @@ import com.touzalab.cryptotexto.ui.*
 fun DecryptionScreen(
     navController: NavController,
 ) {
-    val viewModel: CryptoViewModel = viewModel()
-    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val dataStore = remember { SecretKeysDataStore(context) }
+    val viewModel: CryptoViewModel = viewModel(
+        factory = CryptoViewModelFactory(dataStore, context)
+    )
+    val state by viewModel.state.collectAsState()
     val algorithms = remember { listOf("Cesar", "Vigenère", "Affine", "Transposition") }
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val showLoadKeyDialog by viewModel.showLoadKeyDialog.collectAsState()
+    val savedKeys by viewModel.savedKeys.collectAsState()
+
+    val activity = remember {
+        when (context) {
+            is FragmentActivity -> context
+            else -> throw IllegalStateException("L'activité doit être une FragmentActivity")
+        }
+    }
+    val biometricHelper = remember { BiometricHelper(activity) }
 
     LaunchedEffect(state.showSnackbar) {
         if (state.showSnackbar) {
@@ -126,8 +150,20 @@ fun DecryptionScreen(
                 affineA = state.affineA,
                 onAffineAChange = { viewModel.updateAffineA(it) },
                 affineB = state.affineB,
-                onAffineBChange = { viewModel.updateAffineB(it) }
+                onAffineBChange = { viewModel.updateAffineB(it) },
+                onLoadSavedKey = {
+                    biometricHelper.showBiometricPrompt(
+                        onSuccess = {
+                            viewModel.loadSavedKeys(state.selectedAlgorithm)
+                            viewModel.showLoadKeyDialog()
+                        },
+                        onError = { code, message ->
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
             )
+
             // Bouton de décryptage
             Button(
                 onClick = { viewModel.processCrypto(CryptoOperation.Decrypt) },
@@ -158,10 +194,10 @@ fun DecryptionScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_lock_open_24),
+                        Icon(
+                            imageVector = Icons.Default.LockOpen,
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
+                            tint=MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -222,10 +258,10 @@ fun DecryptionScreen(
                     modifier = Modifier.size(48.dp),
                     enabled = state.result.isNotEmpty()
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.baseline_content_copy_24),
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
                         contentDescription = "Copier",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -244,7 +280,7 @@ fun DecryptionScreen(
                     enabled = state.result.isNotEmpty()
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.baseline_share_24),
+                        imageVector = Icons.Default.Share,
                         contentDescription = "Partager",
                         colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                     )
@@ -259,10 +295,10 @@ fun DecryptionScreen(
                     },
                     modifier = Modifier.size(48.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.baseline_clear_24),
-                        contentDescription = "Effacer",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Effacer le contenu",
+                        tint=MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -279,6 +315,14 @@ fun DecryptionScreen(
             ) {
                 Text(state.snackbarMessage)
             }
+        }
+
+        if (showLoadKeyDialog) {
+            SavedKeysDialog(
+                keys = savedKeys,
+                onDismiss = { viewModel.hideLoadKeyDialog() },
+                onKeySelected = { viewModel.loadSelectedKey(it) }
+            )
         }
     }
 }

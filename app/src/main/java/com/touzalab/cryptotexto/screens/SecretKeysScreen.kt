@@ -1,83 +1,86 @@
 package com.touzalab.cryptotexto.screens
 
+import android.widget.Toast
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter.Companion.tint
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.touzalab.cryptotexto.R
-import com.touzalab.cryptotexto.components.SecretKeysViewModel
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import com.touzalab.cryptotexto.components.SecretKey
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.touzalab.cryptotexto.R
+import com.touzalab.cryptotexto.components.*
+import java.math.BigInteger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecretKeysScreen(
-    navController: NavController,
-    viewModel: SecretKeysViewModel = viewModel()
+    navController: NavController
 ) {
+    val context = LocalContext.current
+    val dataStore = remember { SecretKeysDataStore(context) }
+    val viewModel: SecretKeysViewModel = viewModel(
+        factory = SecretKeysViewModelFactory(dataStore, context)
+    )
     val state by viewModel.state.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    var isAuthenticated by remember { mutableStateOf(false) }
+    val activity = remember {
+        when (context) {
+            is FragmentActivity -> context
+            else -> throw IllegalStateException("L'activité doit être une FragmentActivity")
+        }
+    }
+    val biometricHelper = remember { BiometricHelper(activity) }
+
+    LaunchedEffect(Unit) {
+        biometricHelper.showBiometricPrompt(
+            onSuccess = {
+                isAuthenticated = true
+            },
+            onError = { code, message ->
+                when (code) {
+                    BiometricPrompt.ERROR_NEGATIVE_BUTTON -> {
+                        // L'utilisateur a cliqué sur "Annuler"
+                        navController.navigateUp()
+                    }
+                    BiometricPrompt.ERROR_USER_CANCELED -> {
+                        // L'utilisateur a annulé l'authentification
+                        navController.navigateUp()
+                    }
+                    else -> {
+                        // Autres erreurs : afficher un message et retourner
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        navController.navigateUp()
+                    }
+                }
+            }
+        )
+    }
 
     LaunchedEffect(state.showMessage) {
         if (state.showMessage) {
@@ -96,15 +99,87 @@ fun SecretKeysScreen(
         }
     }
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (!isAuthenticated) {
+                        Modifier.blur(radius = 20.dp)
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            MainContent(
+                navController = navController,
+                viewModel = viewModel,
+                state = state,
+                snackbarHostState = snackbarHostState
+            )
+        }
 
+        if (!isAuthenticated) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Authentification requise",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "Veuillez vous authentifier pour accéder à vos clés secrètes",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainContent(
+    navController: NavController,
+    viewModel: SecretKeysViewModel,
+    state: SecretKeysState,
+    snackbarHostState: SnackbarHostState
+) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = "Clés Secrètes",
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineSmall
                     )
                 },
                 navigationIcon = {
@@ -137,41 +212,135 @@ fun SecretKeysScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            verticalArrangement = Arrangement.Top
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.secretKeys.forEach { secretKey ->
-                    item {
-                        SecretKeyCard(
-                            secretKey = secretKey,
-                            onCopy = { viewModel.copyKey(secretKey) },
-                            onEdit = { viewModel.showEditDialog(secretKey) },
-                            onDelete = { viewModel.deleteKey(secretKey) }
+            if (state.secretKeys.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Aucune clé secrète",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Cliquez sur le bouton + pour ajouter une nouvelle clé",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-            }
-        }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                    .padding(top = 16.dp),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Première rangée avec les boutons d'export
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.exportKeys("pdf")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PictureAsPdf,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Export PDF")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.exportKeys("txt")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Description,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Export TXT")
+                        }
+                    }
 
-        if (state.showAddDialog) {
-            AddSecretKeyDialog(
-                onDismiss = { viewModel.hideAddKeyDialog() },
-                onConfirm = { algorithm, key, description ->
-                    viewModel.addSecretKey(algorithm, key, description)
-                },
-                viewModel = viewModel
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // LazyColumn pour la liste des clés
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.secretKeys) { secretKey ->
+                            SecretKeyCard(
+                                secretKey = secretKey,
+                                onCopy = { viewModel.copyKey(secretKey) },
+                                onEdit = { viewModel.showEditDialog(secretKey) },
+                                onDelete = { viewModel.deleteKey(secretKey) }
+                            )
+                        }
+                    }
+                }
+            }
+
+
+            if (state.showAddDialog) {
+                AddSecretKeyDialog(
+                    onDismiss = { viewModel.hideAddKeyDialog() },
+                    onConfirm = { algorithm, key, description ->
+                        viewModel.addSecretKey(algorithm, key, description)
+                    },
+                    viewModel = viewModel
+                )
+            }
+
+            if (state.showEditDialog && state.selectedKeyForEdit != null) {
+                EditSecretKeyDialog(
+                    secretKey = state.selectedKeyForEdit,
+                    onDismiss = { viewModel.hideEditDialog() },
+                    onConfirm = { secretKey, newKey, newDescription ->
+                        viewModel.editKey(secretKey, newKey, newDescription)
+                    },
+                    viewModel = viewModel
+                )
+            }
         }
     }
 }
 
+
 @Composable
 fun SecretKeyCard(
-    secretKey: com.touzalab.cryptotexto.components.SecretKey,
+    secretKey: SecretKey,
     onCopy: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -210,9 +379,9 @@ fun SecretKeyCard(
                 Row {
                     IconButton(onClick = onCopy) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_content_copy_24),
+                            imageVector = Icons.Default.ContentCopy,
                             contentDescription = "Copier",
-                            colorFilter =tint(MaterialTheme.colorScheme.primary)
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                         )
                     }
                     IconButton(onClick = onEdit) {
@@ -250,13 +419,11 @@ fun AddSecretKeyDialog(
     var showKey by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
-    // Validation des clés pour l'algorithme Affine
     val isAffineKeyValid = remember(keyA, keyB) {
         if (selectedAlgorithm == "Affine") {
             keyA.toIntOrNull()?.let { a ->
                 keyB.toIntOrNull()?.let { b ->
-                    // a doit être premier avec 26 et différent de 0
-                    a != 0 && b in 0..25 && a.toBigInteger().gcd(26.toBigInteger()).toInt() == 1
+                    a != 0 && b in 0..25 && a.toBigInteger().gcd(BigInteger.valueOf(26)) == BigInteger.ONE
                 }
             } ?: false
         } else true
@@ -278,7 +445,6 @@ fun AddSecretKeyDialog(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Sélection de l'algorithme
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = it }
@@ -303,7 +469,6 @@ fun AddSecretKeyDialog(
                                 text = { Text(algorithm) },
                                 onClick = {
                                     selectedAlgorithm = algorithm
-                                    // Réinitialiser les champs de clé lors du changement d'algorithme
                                     key = ""
                                     keyA = ""
                                     keyB = ""
@@ -314,10 +479,8 @@ fun AddSecretKeyDialog(
                     }
                 }
 
-                // Champs de clé adaptifs selon l'algorithme
                 when (selectedAlgorithm) {
                     "Affine" -> {
-                        // Deux champs pour les clés a et b
                         OutlinedTextField(
                             value = keyA,
                             onValueChange = {
@@ -433,7 +596,6 @@ fun AddSecretKeyDialog(
     )
 }
 
-// Le composant de dialogue d'édition
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditSecretKeyDialog(
@@ -448,7 +610,6 @@ fun EditSecretKeyDialog(
     var description by remember { mutableStateOf(secretKey.description) }
     var showKey by remember { mutableStateOf(false) }
 
-    // Initialiser les valeurs en fonction du type d'algorithme
     LaunchedEffect(secretKey) {
         when (secretKey.algorithm) {
             "Affine" -> {
@@ -460,12 +621,11 @@ fun EditSecretKeyDialog(
         }
     }
 
-    // Validation pour Affine
     val isAffineKeyValid = remember(keyA, keyB) {
         if (secretKey.algorithm == "Affine") {
             keyA.toIntOrNull()?.let { a ->
                 keyB.toIntOrNull()?.let { b ->
-                    a != 0 && b in 0..25 && a.toBigInteger().gcd(26.toBigInteger()).toInt() == 1
+                    a != 0 && b in 0..25 && a.toBigInteger().gcd(BigInteger.valueOf(26)) == BigInteger.ONE
                 }
             } ?: false
         } else true

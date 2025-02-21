@@ -1,10 +1,13 @@
 package com.touzalab.cryptotexto.components
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,9 +29,19 @@ sealed class CryptoOperation {
     object Decrypt : CryptoOperation()
 }
 
-class CryptoViewModel : ViewModel() {
+class CryptoViewModel(
+    private val dataStore: SecretKeysDataStore,
+    private val context: Context
+) : ViewModel() {
     private val _state = MutableStateFlow(CryptoState())
     val state: StateFlow<CryptoState> = _state.asStateFlow()
+
+    private val _showLoadKeyDialog = MutableStateFlow(false)
+    val showLoadKeyDialog: StateFlow<Boolean> = _showLoadKeyDialog.asStateFlow()
+
+    private val _savedKeys = MutableStateFlow<List<SecretKey>>(emptyList())
+    val savedKeys: StateFlow<List<SecretKey>> = _savedKeys.asStateFlow()
+
 
     fun updateMessage(message: String) {
         _state.update { it.copy(message = message) }
@@ -180,5 +193,48 @@ class CryptoViewModel : ViewModel() {
             showSnackbar = true,
             snackbarMessage = message
         )}
+    }
+
+    //chargement de clé
+    fun showLoadKeyDialog() {
+        viewModelScope.launch {
+            _showLoadKeyDialog.value = true
+        }
+    }
+
+    fun hideLoadKeyDialog() {
+        _showLoadKeyDialog.value = false
+    }
+
+    fun loadSavedKeys(algorithm: String) {
+        viewModelScope.launch {
+            val keys = dataStore.secretKeys.first()
+            _savedKeys.value = keys.filter { it.algorithm == algorithm }
+        }
+    }
+
+    fun loadSelectedKey(secretKey: SecretKey) {
+        when (secretKey.algorithm) {
+            "Affine" -> {
+                val (a, b) = secretKey.key.split(":")
+                updateAffineA(a.toInt())
+                updateAffineB(b.toInt())
+            }
+            else -> updateKey(secretKey.key)
+        }
+        hideLoadKeyDialog()
+    }
+}
+
+class CryptoViewModelFactory(
+    private val dataStore: SecretKeysDataStore,
+    private val context: Context
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CryptoViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return CryptoViewModel(dataStore, context) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

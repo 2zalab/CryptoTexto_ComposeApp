@@ -1,9 +1,11 @@
 package com.touzalab.cryptotexto
 import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -81,13 +83,39 @@ fun CryptoTextoApp(startDestination: String) {
             DeveloperScreen(navController = navController)
         }
         composable(Screen.SecretKeys.route) {
-           //val contet = remember { BiometricHelper(context) }
-            val activity = remember { context as FragmentActivity }
+            val context = LocalContext.current
+            val activity = remember {
+                when (context) {
+                    is FragmentActivity -> context
+                    else -> throw IllegalStateException("L'activité doit être une FragmentActivity")
+                }
+            }
+
             // Créer le BiometricHelper avec l'activité
             val biometricHelper = remember { BiometricHelper(activity) }
+
             LaunchedEffect(Unit) {
-                biometricHelper.showBiometricPrompt()
+                biometricHelper.showBiometricPrompt(
+                    onSuccess = {
+                        // L'authentification a réussi, ne rien faire car SecretKeysScreen gère déjà l'affichage
+                    },
+                    onError = { code, message ->
+                        when (code) {
+                            BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                            BiometricPrompt.ERROR_USER_CANCELED -> {
+                                // L'utilisateur a annulé ou cliqué sur le bouton négatif
+                                navController.navigateUp()
+                            }
+                            else -> {
+                                // Autres erreurs
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                navController.navigateUp()
+                            }
+                        }
+                    }
+                )
             }
+
             SecretKeysScreen(navController)
         }
     }

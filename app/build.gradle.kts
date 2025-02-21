@@ -69,6 +69,8 @@ dependencies {
     implementation (libs.androidx.biometric)
     implementation (libs.androidx.material.icons.extended)
     implementation (libs.gson)
+    implementation (libs.accompanist.systemuicontroller)
+    implementation (libs.itextpdf)
     //implementation (libs.fontawesomecompose)
     //implementation(libs.font.awesome)
     //implementation(libs.feather)

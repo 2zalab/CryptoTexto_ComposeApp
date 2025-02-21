@@ -3,10 +3,14 @@ package com.touzalab.cryptotexto.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,7 +37,14 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.icons.sharp.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,35 +129,126 @@ fun HomeScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(250.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    // Fond avec gradient et overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                    )
+                                )
+                            )
                     ) {
+                        // Image de fond avec effet parallaxe
                         Image(
                             painter = painterResource(id = R.drawable.header_illustration),
                             contentDescription = "header image",
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(alpha = 0.85f)
                         )
+
+                        // Overlay avec motif de points
+                        Canvas(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            val pattern = Path().apply {
+                                for (x in 0..size.width.toInt() step 20) {
+                                    for (y in 0..size.height.toInt() step 20) {
+                                        addOval(
+                                            Rect(
+                                                offset = Offset(x.toFloat(), y.toFloat()),
+                                                size = Size(2f, 2f)
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                            drawPath(
+                                path = pattern,
+                                color = Color.White.copy(alpha = 0.1f)
+                            )
+                        }
+
+                        // Contenu du header
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Logo animé
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                        shape = RoundedCornerShape(20.dp)
+                                    )
+                                    .border(
+                                        width = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(20.dp)
+                                    )
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo_crypto),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .align(Alignment.Center)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Titre avec effet de brillance
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(30.dp))
+                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+                                    .padding(horizontal = 32.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = "CryptoTexto",
+                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        shadow = Shadow(
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                            offset = Offset(2f, 2f),
+                                            blurRadius = 4f
+                                        )
+                                    ),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
 
+                    // TopAppBar avec effet de verre
                     CenterAlignedTopAppBar(
-                        title = {
-                            Text(
-                                text = "CryptoTexto",
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        },
+                        title = { },
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            IconButton(
+                                onClick = { scope.launch { drawerState.open() } },
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                        shape = CircleShape
+                                    )
+                                    .padding(4.dp)
+                            ) {
                                 Icon(
                                     Icons.Default.Menu,
                                     contentDescription = "Menu",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         },
@@ -212,12 +314,12 @@ fun HomeScreen(navController: NavController) {
                         shape = RoundedCornerShape(5.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Lock,
+                            imageVector = Icons.Default.Fingerprint,
                             tint =  Color.White,
                             contentDescription = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Mes Clés Secretes")
+                        Text(text = "Mes Clés Secrètes")
 
                     }
 
