@@ -76,7 +76,7 @@ fun CryptoInputFields(
         OutlinedTextField(
             value = message,
             onValueChange = onMessageChange,
-            label = { Text("Message à traiter") },
+            label = { Text("votre Message à traiter") },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp),

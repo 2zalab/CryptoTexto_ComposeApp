@@ -179,6 +179,7 @@ fun EncryptionScreen(
         if (showLoadKeyDialog) {
             SavedKeysDialog(
                 keys = savedKeys,
+                selectedAlgorithm = state.selectedAlgorithm,  // Ajout de l'algorithme sélectionné
                 onDismiss = { viewModel.hideLoadKeyDialog() },
                 onKeySelected = { viewModel.loadSelectedKey(it) }
             )
