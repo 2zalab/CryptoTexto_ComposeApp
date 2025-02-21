@@ -1,6 +1,11 @@
 [versions]
 agp = "8.5.0"
+biometric = "1.2.0-alpha05"
 datastorePreferencesVersion = "1.0.0"
+feather = "1.0.0"
+fontAwesome = "1.0.0"
+fontawesomecompose = "1.0.0"
+gson = "2.10.1"
 kotlin = "1.9.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -10,13 +15,22 @@ lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.10.0"
 composeBom = "2024.04.01"
 lottieComposeVersion = "6.4.0"
+materialIconsExtended = "1.6.0"
 navigationRuntimeAndroid = "2.9.0-alpha06"
 navigationCompose = "2.8.7"
+fragmentKtx = "1.8.6"
+biometricKtx = "1.1.0"
 
 [libraries]
 android-lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieComposeVersion" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferencesVersion" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+feather = { module = "br.com.devsrsouza.compose.icons:feather", version.ref = "feather" }
+font-awesome = { module = "br.com.devsrsouza.compose.icons:font-awesome", version.ref = "fontAwesome" }
+fontawesomecompose = { module = "com.github.Gurupreet:FontAwesomeCompose", version.ref = "fontawesomecompose" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -32,6 +46,8 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
+androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

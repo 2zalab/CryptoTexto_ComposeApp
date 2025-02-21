@@ -29,6 +29,12 @@ import androidx.navigation.NavController
 import com.touzalab.cryptotexto.R
 import com.touzalab.cryptotexto.navigation.Screen
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.sharp.*
+import androidx.compose.ui.graphics.ColorFilter
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,11 +199,28 @@ fun HomeScreen(navController: NavController) {
                     OperationCard(
                         title = "DECRYPTER UN MESSAGE",
                         description = "Cette option vous permet de décrypter votre texte ou votre message",
-                        icon = Icons.Outlined.Lock,
+                        icon = Icons.Rounded.LockOpen,
                         onClick = { navController.navigate(Screen.Decryption.route) }
                     )
 
                     Spacer(modifier = Modifier.height(50.dp))
+
+                    Button(
+                        onClick = {  navController.navigate(Screen.SecretKeys.route) },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(5.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            tint =  Color.White,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Mes Clés Secretes")
+
+                    }
+
                 }
             }
 
@@ -206,7 +229,7 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(0.dp, 0.dp,0.dp,10.dp)
+                    .padding(0.dp, 0.dp, 0.dp, 10.dp)
                     .height(50.dp),
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
@@ -260,7 +283,7 @@ private fun DrawerContent(
         )
 
         DrawerItem(
-            icon = Icons.Outlined.Lock,
+            icon = Icons.Outlined.LockOpen,
             text = "Décrypter un message",
             onClick = onNavigateToDecryption
         )
@@ -274,7 +297,7 @@ private fun DrawerContent(
         )
 
         DrawerItem(
-            icon = Icons.Default.List,
+            icon = Icons.Default.Apps,
             text = "Autres applications",
             onClick = onOtherApps
         )
@@ -294,7 +317,7 @@ private fun DrawerContent(
         )
 
         DrawerItem(
-            icon = Icons.Outlined.Settings,
+            icon = Icons.Default.InsertLink,
             text = "GitHub",
             onClick = onGitHub
         )
@@ -369,7 +392,7 @@ fun OperationCard(
             .clip(RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         ),
         border = BorderStroke(
             width = 1.dp,
@@ -379,11 +402,11 @@ fun OperationCard(
             defaultElevation = 0.dp
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = icon,
@@ -392,25 +415,28 @@ fun OperationCard(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

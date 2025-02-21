@@ -9,4 +9,5 @@ sealed class Screen(val route: String) {
     object About : Screen("about")
     object GitHub : Screen("github")
     object Developer : Screen("developer")
+    object SecretKeys : Screen("secret_keys")
 }

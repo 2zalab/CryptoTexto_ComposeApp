@@ -50,6 +50,7 @@ android {
 }
 
 dependencies {
+    val compose_version="1.6.0"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -63,6 +64,14 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation (libs.android.lottie.compose)
     implementation (libs.androidx.datastore.preferences)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.biometric.ktx)
+    implementation (libs.androidx.biometric)
+    implementation (libs.androidx.material.icons.extended)
+    implementation (libs.gson)
+    //implementation (libs.fontawesomecompose)
+    //implementation(libs.font.awesome)
+    //implementation(libs.feather)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,5 +1,4 @@
 package com.touzalab.cryptotexto
-
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,14 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.touzalab.cryptotexto.components.BiometricHelper
 import com.touzalab.cryptotexto.components.OnboardingPreferences
 import com.touzalab.cryptotexto.navigation.Screen
 import com.touzalab.cryptotexto.screens.AboutScreen
@@ -26,12 +28,13 @@ import com.touzalab.cryptotexto.screens.DeveloperScreen
 import com.touzalab.cryptotexto.screens.EncryptionScreen
 import com.touzalab.cryptotexto.screens.HomeScreen
 import com.touzalab.cryptotexto.screens.OnboardingScreen
+import com.touzalab.cryptotexto.screens.SecretKeysScreen
 import com.touzalab.cryptotexto.screens.SplashScreen
 import com.touzalab.cryptotexto.ui.theme.CryptoTextoTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -53,6 +56,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CryptoTextoApp(startDestination: String) {
       val navController = rememberNavController()
+      val context = LocalContext.current
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Splash.route) {
@@ -75,6 +79,16 @@ fun CryptoTextoApp(startDestination: String) {
         }
         composable(Screen.Developer.route) {
             DeveloperScreen(navController = navController)
+        }
+        composable(Screen.SecretKeys.route) {
+           //val contet = remember { BiometricHelper(context) }
+            val activity = remember { context as FragmentActivity }
+            // Créer le BiometricHelper avec l'activité
+            val biometricHelper = remember { BiometricHelper(activity) }
+            LaunchedEffect(Unit) {
+                biometricHelper.showBiometricPrompt()
+            }
+            SecretKeysScreen(navController)
         }
     }
 }
