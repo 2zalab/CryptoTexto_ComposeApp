@@ -2,24 +2,27 @@ package com.touzalab.cryptotexto.screens
 
 import android.widget.Toast
 import androidx.biometric.BiometricPrompt
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,15 +68,12 @@ fun SecretKeysScreen(
             onError = { code, message ->
                 when (code) {
                     BiometricPrompt.ERROR_NEGATIVE_BUTTON -> {
-                        // L'utilisateur a cliqué sur "Annuler"
                         navController.navigateUp()
                     }
                     BiometricPrompt.ERROR_USER_CANCELED -> {
-                        // L'utilisateur a annulé l'authentification
                         navController.navigateUp()
                     }
                     else -> {
-                        // Autres erreurs : afficher un message et retourner
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         navController.navigateUp()
                     }
@@ -100,6 +100,21 @@ fun SecretKeysScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Fond d'écran avec dégradé subtil
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                        )
+                    )
+                )
+        )
+
+        // Contenu principal avec effet de flou si non authentifié
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -119,45 +134,97 @@ fun SecretKeysScreen(
             )
         }
 
+        // Overlay d'authentification
         if (!isAuthenticated) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f)),
+                    .background(Color.Black.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
-                Card(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Authentification requise",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Veuillez vous authentifier pour accéder à vos clés secrètes",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
+                AuthenticationCard()
             }
+        }
+    }
+}
+
+@Composable
+fun AuthenticationCard() {
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(0.85f)
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Icône animée de sécurité
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                val infiniteTransition = rememberInfiniteTransition()
+                val scale by infiniteTransition.animateFloat(
+                    initialValue = 0.8f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
+
+                Icon(
+                    imageVector = Icons.Filled.Fingerprint,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .scale(scale),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Authentification requise",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Veuillez vous authentifier pour accéder à vos clés secrètes",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CircularProgressIndicator(
+                modifier = Modifier.size(36.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 3.dp
+            )
         }
     }
 }
@@ -173,13 +240,26 @@ private fun MainContent(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Clés Secrètes",
-                        style = MaterialTheme.typography.headlineSmall
+                        text = "Mes Clés Secrètes",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 },
                 navigationIcon = {
@@ -190,129 +270,50 @@ private fun MainContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 ),
                 scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { viewModel.showAddKeyDialog() },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut()
             ) {
-                Icon(Icons.Default.Add, "Ajouter une clé")
-                Spacer(Modifier.width(8.dp))
-                Text("Nouvelle clé")
+                FloatingActionButton(
+                    onClick = { viewModel.showAddKeyDialog() },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = CircleShape,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Ajouter une clé",
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.Top
+                .padding(padding)
         ) {
             if (state.secretKeys.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Top,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Aucune clé secrète",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Cliquez sur le bouton + pour ajouter une nouvelle clé",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                EmptyKeysContent()
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                    .padding(top = 16.dp),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Première rangée avec les boutons d'export
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.exportKeys("pdf")
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PictureAsPdf,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Export PDF")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.exportKeys("txt")
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Export TXT")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // LazyColumn pour la liste des clés
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(state.secretKeys) { secretKey ->
-                            SecretKeyCard(
-                                secretKey = secretKey,
-                                onCopy = { viewModel.copyKey(secretKey) },
-                                onEdit = { viewModel.showEditDialog(secretKey) },
-                                onDelete = { viewModel.deleteKey(secretKey) }
-                            )
-                        }
-                    }
-                }
+                KeysListContent(
+                    viewModel = viewModel,
+                    state = state
+                )
             }
 
-
+            // Dialogs
             if (state.showAddDialog) {
                 AddSecretKeyDialog(
                     onDismiss = { viewModel.hideAddKeyDialog() },
@@ -337,6 +338,140 @@ private fun MainContent(
     }
 }
 
+@Composable
+fun EmptyKeysContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            // Animation subtile de l'icône
+            val infiniteTransition = rememberInfiniteTransition()
+            val iconColor by infiniteTransition.animateColor(
+                initialValue = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                targetValue = MaterialTheme.colorScheme.primary,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
+            )
+
+            Icon(
+                imageVector = Icons.Rounded.VpnKey,
+                contentDescription = null,
+                modifier = Modifier.size(100.dp),
+                tint = iconColor
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Aucune clé enregistrée",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Ajoutez votre première clé en appuyant sur le bouton + en bas de l'écran",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun KeysListContent(
+    viewModel: SecretKeysViewModel,
+    state: SecretKeysState
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // En-tête avec les boutons d'export
+        ExportButtonsRow(viewModel)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Liste des clés
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 80.dp) // Espace pour le FAB
+        ) {
+            items(
+                items = state.secretKeys,
+                key = { it.id }
+            ) { secretKey ->
+                SecretKeyCard(
+                    secretKey = secretKey,
+                    onCopy = { viewModel.copyKey(secretKey) },
+                    onEdit = { viewModel.showEditDialog(secretKey) },
+                    onDelete = { viewModel.deleteKey(secretKey) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExportButtonsRow(viewModel: SecretKeysViewModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Exporter : ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        FilledTonalIconButton(
+            onClick = { viewModel.exportKeys("pdf") },
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PictureAsPdf,
+                contentDescription = "Exporter en PDF",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        FilledTonalIconButton(
+            onClick = { viewModel.exportKeys("txt") },
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Description,
+                contentDescription = "Exporter en TXT",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
 
 @Composable
 fun SecretKeyCard(
@@ -345,59 +480,117 @@ fun SecretKeyCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    // Déterminer l'icône en fonction de l'algorithme
+    val algorithmIcon: ImageVector = when (secretKey.algorithm) {
+        "Cesar" -> Icons.Outlined.Numbers
+        "Vigenère" -> Icons.Outlined.Abc
+        "Affine" -> Icons.Outlined.Functions
+        "Transposition" -> Icons.Outlined.SwapVert
+        else -> Icons.Outlined.Key
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(),
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+            .shadow(
+                elevation = 2.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
         )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icône de l'algorithme
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = algorithmIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Informations sur la clé
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = secretKey.algorithm,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Text(
+                    text = secretKey.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Actions
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = secretKey.algorithm,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = secretKey.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                IconButton(
+                    onClick = onCopy,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copier",
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                Row {
-                    IconButton(onClick = onCopy) {
-                        Image(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copier",
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
-                        )
-                    }
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Modifier",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Supprimer",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Modifier",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Supprimer",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
@@ -435,7 +628,8 @@ fun AddSecretKeyDialog(
             Text(
                 text = "Nouvelle clé secrète",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
         },
         text = {
@@ -443,7 +637,7 @@ fun AddSecretKeyDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -457,7 +651,11 @@ fun AddSecretKeyDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
+                        )
                     )
 
                     ExposedDropdownMenu(
@@ -473,92 +671,141 @@ fun AddSecretKeyDialog(
                                     keyA = ""
                                     keyB = ""
                                     expanded = false
+                                },
+                                leadingIcon = {
+                                    val icon = when (algorithm) {
+                                        "Cesar" -> Icons.Outlined.Numbers
+                                        "Vigenère" -> Icons.Outlined.Abc
+                                        "Affine" -> Icons.Outlined.Functions
+                                        "Transposition" -> Icons.Outlined.SwapVert
+                                        else -> Icons.Outlined.Key
+                                    }
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             )
                         }
                     }
                 }
 
-                when (selectedAlgorithm) {
-                    "Affine" -> {
-                        OutlinedTextField(
-                            value = keyA,
-                            onValueChange = {
-                                if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
-                                    keyA = it
-                                }
-                            },
-                            label = { Text("Clé a (nombre premier avec 26)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError = keyA.isNotEmpty() && !isAffineKeyValid,
-                            supportingText = if (keyA.isNotEmpty() && !isAffineKeyValid) {
-                                { Text("La clé 'a' doit être première avec 26") }
-                            } else null,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = keyB,
-                            onValueChange = {
-                                if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
-                                    keyB = it
-                                }
-                            },
-                            label = { Text("Clé b (0-25)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError = keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false,
-                            supportingText = if (keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false) {
-                                { Text("La clé 'b' doit être entre 0 et 25") }
-                            } else null,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    "Vigenère" -> {
-                        OutlinedTextField(
-                            value = key,
-                            onValueChange = { newKey ->
-                                if (newKey.all { it.isLetter() || it.isWhitespace() }) {
-                                    key = newKey.uppercase()
-                                }
-                            },
-                            label = { Text("Clé (lettres uniquement)") },
-                            visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
-                            trailingIcon = {
-                                IconButton(onClick = { showKey = !showKey }) {
-                                    Icon(
-                                        imageVector = if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showKey) "Masquer la clé" else "Afficher la clé"
+                AnimatedVisibility(
+                    visible = selectedAlgorithm.isNotEmpty(),
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    when (selectedAlgorithm) {
+                        "Affine" -> {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = keyA,
+                                    onValueChange = {
+                                        if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
+                                            keyA = it
+                                        }
+                                    },
+                                    label = { Text("Clé a (nombre premier avec 26)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    isError = keyA.isNotEmpty() && !isAffineKeyValid,
+                                    supportingText = if (keyA.isNotEmpty() && !isAffineKeyValid) {
+                                        { Text("La clé 'a' doit être première avec 26") }
+                                    } else null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                        errorBorderColor = MaterialTheme.colorScheme.error,
+                                        errorLabelColor = MaterialTheme.colorScheme.error
                                     )
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    "Cesar" -> {
-                        OutlinedTextField(
-                            value = key,
-                            onValueChange = { newKey ->
-                                if (newKey.isEmpty() || (newKey.toIntOrNull() != null && newKey.toInt() in 0..25)) {
-                                    key = newKey
-                                }
-                            },
-                            label = { Text("Décalage (0-25)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    "Transposition" -> {
-                        OutlinedTextField(
-                            value = key,
-                            onValueChange = { newKey ->
-                                if (newKey.isEmpty() || newKey.toIntOrNull() != null) {
-                                    key = newKey
-                                }
-                            },
-                            label = { Text("Clé (nombre entier positif)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                )
+
+                                OutlinedTextField(
+                                    value = keyB,
+                                    onValueChange = {
+                                        if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
+                                            keyB = it
+                                        }
+                                    },
+                                    label = { Text("Clé b (0-25)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    isError = keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false,
+                                    supportingText = if (keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false) {
+                                        { Text("La clé 'b' doit être entre 0 et 25") }
+                                    } else null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                        errorBorderColor = MaterialTheme.colorScheme.error,
+                                        errorLabelColor = MaterialTheme.colorScheme.error
+                                    )
+                                )
+                            }
+                        }
+                        "Vigenère" -> {
+                            OutlinedTextField(
+                                value = key,
+                                onValueChange = { newKey ->
+                                    if (newKey.all { it.isLetter() || it.isWhitespace() }) {
+                                        key = newKey.uppercase()
+                                    }
+                                },
+                                label = { Text("Clé (lettres uniquement)") },
+                                visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    IconButton(onClick = { showKey = !showKey }) {
+                                        Icon(
+                                            imageVector = if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = if (showKey) "Masquer la clé" else "Afficher la clé",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                        "Cesar" -> {
+                            OutlinedTextField(
+                                value = key,
+                                onValueChange = { newKey ->
+                                    if (newKey.isEmpty() || (newKey.toIntOrNull() != null && newKey.toInt() in 0..25)) {
+                                        key = newKey
+                                    }
+                                },
+                                label = { Text("Décalage (0-25)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                        "Transposition" -> {
+                            OutlinedTextField(
+                                value = key,
+                                onValueChange = { newKey ->
+                                    if (newKey.isEmpty() || newKey.toIntOrNull() != null) {
+                                        key = newKey
+                                    }
+                                },
+                                label = { Text("Clé (nombre entier positif)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -566,7 +813,11 @@ fun AddSecretKeyDialog(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         },
@@ -581,18 +832,23 @@ fun AddSecretKeyDialog(
                     onDismiss()
                 },
                 enabled = when (selectedAlgorithm) {
-                    "Affine" -> isAffineKeyValid && keyA.isNotEmpty() && keyB.isNotEmpty()
-                    else -> selectedAlgorithm.isNotBlank() && key.isNotBlank()
-                }
+                    "Affine" -> isAffineKeyValid && keyA.isNotEmpty() && keyB.isNotEmpty() && description.isNotEmpty()
+                    else -> selectedAlgorithm.isNotBlank() && key.isNotBlank() && description.isNotEmpty()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text("Ajouter")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = MaterialTheme.colorScheme.primary)
             }
-        }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
@@ -637,7 +893,8 @@ fun EditSecretKeyDialog(
             Text(
                 text = "Modifier la clé secrète",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
         },
         text = {
@@ -645,47 +902,90 @@ fun EditSecretKeyDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Algorithme : ${secretKey.algorithm}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                // Affichage de l'algorithme (non modifiable)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val icon = when (secretKey.algorithm) {
+                            "Cesar" -> Icons.Outlined.Numbers
+                            "Vigenère" -> Icons.Outlined.Abc
+                            "Affine" -> Icons.Outlined.Functions
+                            "Transposition" -> Icons.Outlined.SwapVert
+                            else -> Icons.Outlined.Key
+                        }
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Algorithme : ${secretKey.algorithm}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
 
+                // Champs de saisie selon l'algorithme
                 when (secretKey.algorithm) {
                     "Affine" -> {
-                        OutlinedTextField(
-                            value = keyA,
-                            onValueChange = {
-                                if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
-                                    keyA = it
-                                }
-                            },
-                            label = { Text("Clé a (nombre premier avec 26)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError = keyA.isNotEmpty() && !isAffineKeyValid,
-                            supportingText = if (keyA.isNotEmpty() && !isAffineKeyValid) {
-                                { Text("La clé 'a' doit être première avec 26") }
-                            } else null,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = keyA,
+                                onValueChange = {
+                                    if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
+                                        keyA = it
+                                    }
+                                },
+                                label = { Text("Clé a (nombre premier avec 26)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = keyA.isNotEmpty() && !isAffineKeyValid,
+                                supportingText = if (keyA.isNotEmpty() && !isAffineKeyValid) {
+                                    { Text("La clé 'a' doit être première avec 26") }
+                                } else null,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                    errorBorderColor = MaterialTheme.colorScheme.error,
+                                    errorLabelColor = MaterialTheme.colorScheme.error
+                                )
+                            )
 
-                        OutlinedTextField(
-                            value = keyB,
-                            onValueChange = {
-                                if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
-                                    keyB = it
-                                }
-                            },
-                            label = { Text("Clé b (0-25)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError = keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false,
-                            supportingText = if (keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false) {
-                                { Text("La clé 'b' doit être entre 0 et 25") }
-                            } else null,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            OutlinedTextField(
+                                value = keyB,
+                                onValueChange = {
+                                    if (it.isEmpty() || it.matches(Regex("^\\d*$"))) {
+                                        keyB = it
+                                    }
+                                },
+                                label = { Text("Clé b (0-25)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false,
+                                supportingText = if (keyB.isNotEmpty() && keyB.toIntOrNull()?.let { it !in 0..25 } ?: false) {
+                                    { Text("La clé 'b' doit être entre 0 et 25") }
+                                } else null,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                    errorBorderColor = MaterialTheme.colorScheme.error,
+                                    errorLabelColor = MaterialTheme.colorScheme.error
+                                )
+                            )
+                        }
                     }
                     "Vigenère" -> {
                         OutlinedTextField(
@@ -701,11 +1001,16 @@ fun EditSecretKeyDialog(
                                 IconButton(onClick = { showKey = !showKey }) {
                                     Icon(
                                         imageVector = if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showKey) "Masquer la clé" else "Afficher la clé"
+                                        contentDescription = if (showKey) "Masquer la clé" else "Afficher la clé",
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                     "Cesar" -> {
@@ -718,7 +1023,11 @@ fun EditSecretKeyDialog(
                             },
                             label = { Text("Décalage (0-25)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                     "Transposition" -> {
@@ -731,7 +1040,11 @@ fun EditSecretKeyDialog(
                             },
                             label = { Text("Clé (nombre entier positif)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                 }
@@ -740,7 +1053,11 @@ fun EditSecretKeyDialog(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         },
@@ -755,17 +1072,22 @@ fun EditSecretKeyDialog(
                     onDismiss()
                 },
                 enabled = when (secretKey.algorithm) {
-                    "Affine" -> isAffineKeyValid && keyA.isNotEmpty() && keyB.isNotEmpty()
-                    else -> key.isNotBlank()
-                }
+                    "Affine" -> isAffineKeyValid && keyA.isNotEmpty() && keyB.isNotEmpty() && description.isNotEmpty()
+                    else -> key.isNotBlank() && description.isNotEmpty()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text("Modifier")
+                Text("Mettre à jour")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = MaterialTheme.colorScheme.primary)
             }
-        }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }

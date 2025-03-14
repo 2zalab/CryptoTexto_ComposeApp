@@ -71,6 +71,7 @@ dependencies {
     implementation (libs.gson)
     implementation (libs.accompanist.systemuicontroller)
     implementation (libs.itextpdf)
+    implementation ("commons-io:commons-io:2.11.0")
     //implementation (libs.fontawesomecompose)
     //implementation(libs.font.awesome)
     //implementation(libs.feather)
