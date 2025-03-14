@@ -60,32 +60,43 @@ fun OnboardingScreen(navController: NavController) {
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) { page ->
-            OnboardingPageContent(pages[page])
+    // Use Box as the root container to allow fixed positioning at the bottom
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Content area that uses available space
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) { page ->
+                OnboardingPageContent(pages[page])
+            }
+
+            // Indicator is below the pager content but above the fixed bottom buttons
+            HorizontalPagerIndicator(
+                pageCount = pages.size,
+                currentPage = pagerState.currentPage,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterHorizontally),
+                activeColor = MaterialTheme.colorScheme.primary,
+                inactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            )
+
+            // Space to ensure indicator isn't covered by the bottom buttons
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
-        HorizontalPagerIndicator(
-            pageCount = pages.size,
-            currentPage = pagerState.currentPage,
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.CenterHorizontally),
-            activeColor = MaterialTheme.colorScheme.primary,
-            inactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-        )
-
+        // Fixed at the bottom
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 22.dp)
                 .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -98,7 +109,7 @@ fun OnboardingScreen(navController: NavController) {
                         }
                     }
                 }) {
-                    Text("Passer",fontFamily = Montserrat)
+                    Text("Passer", fontFamily = Montserrat)
                 }
                 Button(onClick = {
                     // Launch coroutine to animate to next page
@@ -106,7 +117,7 @@ fun OnboardingScreen(navController: NavController) {
                         pagerState.animateScrollToPage(pagerState.currentPage + 1)
                     }
                 }) {
-                    Text("Suivant", fontFamily = Montserrat )
+                    Text("Suivant", fontFamily = Montserrat)
                 }
             } else {
                 Button(
@@ -120,7 +131,7 @@ fun OnboardingScreen(navController: NavController) {
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Commencer",fontFamily = Montserrat)
+                    Text("Commencer", fontFamily = Montserrat)
                 }
             }
         }
@@ -132,23 +143,20 @@ fun OnboardingPageContent(page: OnboardingPage) {
     val composition by rememberLottieComposition(
         spec = LottieCompositionSpec.RawRes(page.animationRes)
     )
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // TODO: Add Lottie animation
-        
-        Spacer(modifier = Modifier.height(32.dp))
         LottieAnimation(
             composition = composition,
-            modifier = Modifier.size(250.dp),
+            modifier = Modifier.size(200.dp),
             iterations = LottieConstants.IterateForever
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = page.title,
             style = MaterialTheme.typography.headlineSmall.copy(

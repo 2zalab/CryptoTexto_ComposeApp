@@ -70,7 +70,7 @@ fun SplashScreen(navController: NavController) {
     }
 
     LaunchedEffect(true) {
-        delay(3000)
+        delay(5000)
         // TODO: Check first launch preference
         navController.navigate(Screen.Onboarding.route) {
             popUpTo(Screen.Splash.route) { inclusive = true }

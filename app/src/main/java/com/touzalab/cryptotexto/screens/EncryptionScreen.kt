@@ -12,26 +12,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.touzalab.cryptotexto.components.BiometricHelper
-import com.touzalab.cryptotexto.components.CryptoActionButtons
-import com.touzalab.cryptotexto.components.CryptoInputFields
-import com.touzalab.cryptotexto.components.CryptoOperation
-import com.touzalab.cryptotexto.components.CryptoResultCard
-import com.touzalab.cryptotexto.components.CryptoTopBar
-import com.touzalab.cryptotexto.components.CryptoViewModel
-import com.touzalab.cryptotexto.components.CryptoViewModelFactory
-import com.touzalab.cryptotexto.components.SavedKeysDialog
-import com.touzalab.cryptotexto.components.SecretKeysDataStore
-import com.touzalab.cryptotexto.components.areCoprimes
+import com.touzalab.cryptotexto.components.*
 import com.touzalab.cryptotexto.ui.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EncryptionScreen(
     navController: NavController,
@@ -49,6 +43,13 @@ fun EncryptionScreen(
     val showLoadKeyDialog by viewModel.showLoadKeyDialog.collectAsState()
     val savedKeys by viewModel.savedKeys.collectAsState()
 
+    // Contrôleurs pour gérer le clavier
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    // État pour suivre si un champ est en focus
+    var isAnyFieldFocused by remember { mutableStateOf(false) }
+
     val activity = remember {
         when (context) {
             is FragmentActivity -> context
@@ -56,7 +57,6 @@ fun EncryptionScreen(
         }
     }
     val biometricHelper = remember { BiometricHelper(activity) }
-
 
     LaunchedEffect(state.showSnackbar) {
         if (state.showSnackbar) {
@@ -73,117 +73,156 @@ fun EncryptionScreen(
         topBar = {
             CryptoTopBar(
                 title = "Cryptage",
-                onBackClick = { navController.navigateUp() }
+                onBackClick = {
+                    // Masquer le clavier lors de la navigation
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    navController.navigateUp()
+                }
             )
         },
-        //snackbarHost = { SnackbarHost(snackbarHostState) }
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
                 Snackbar(
                     snackbarData = data,
-                    containerColor = MaterialTheme.colorScheme.primary,  // Couleur de fond primary
-                    contentColor = Color.White,  // Texte en blanc
-                    actionColor = Color.White,   // Bouton "OK" en blanc
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                    actionColor = Color.White,
                     modifier = Modifier.padding(16.dp)
                 )
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(scrollState)
         ) {
-            CryptoInputFields(
-                message = state.message,
-                onMessageChange = { viewModel.updateMessage(it) },
-                selectedAlgorithm = state.selectedAlgorithm,
-                onAlgorithmChange = { viewModel.updateAlgorithm(it) },
-                key = state.key,
-                onKeyChange = { viewModel.updateKey(it) },
-                algorithms = algorithms,
-                affineA = state.affineA,
-                onAffineAChange = { viewModel.updateAffineA(it) },
-                affineB = state.affineB,
-                onAffineBChange = { viewModel.updateAffineB(it) },
-                onLoadSavedKey = {
-                    biometricHelper.showBiometricPrompt(
-                        onSuccess = {
-                            viewModel.loadSavedKeys(state.selectedAlgorithm)
-                            viewModel.showLoadKeyDialog()
-                        },
-                        onError = { code, message ->
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-            )
-
-            Button(
-                onClick = { viewModel.processCrypto(CryptoOperation.Encrypt) },
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-                shape = RoundedCornerShape(5.dp),
-                enabled = when (state.selectedAlgorithm) {
-                    "Affine" -> !state.isLoading &&
-                            state.message.isNotEmpty() &&
-                            state.affineA != 0 &&
-                            areCoprimes(state.affineA, 26)  // Vérifie que 'a' est valide pour Affine
-                    "Cesar" -> !state.isLoading &&
-                            state.message.isNotEmpty() &&
-                            state.key.toIntOrNull() != null  // Vérifie que la clé est un nombre valide
-                    else -> !state.isLoading &&
-                            state.message.isNotEmpty() &&
-                            state.key.isNotEmpty()  // Pour Vigenère, XOR et Transposition
-                }
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Lancer le cryptage")
-                }
-            }
-
-            CryptoResultCard(
-                title = "Message crypté",
-                result = state.result
-            )
-
-            CryptoActionButtons(
-                onCopy = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("encrypted_message", state.result)
-                    clipboard.setPrimaryClip(clip)
-                    viewModel.showSnackbar("Message copié dans le presse-papiers")
-                },
-                onShare = {
-                    val sendIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, state.result)
-                        type = "text/plain"
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(scrollState)
+                    // Gestionnaire pour masquer le clavier lors du clic en dehors des champs
+                    .onFocusChanged { focusState ->
+                        if (!focusState.hasFocus && isAnyFieldFocused) {
+                            keyboardController?.hide()
+                            isAnyFieldFocused = false
+                        }
                     }
-                    context.startActivity(Intent.createChooser(sendIntent, "Partager via"))
-                },
-                onClear = {
-                    viewModel.clearInputs()
-                    viewModel.showSnackbar("Contenu effacé")
+            ) {
+                // Composant d'entrée avec gestion du focus
+                CryptoInputFields(
+                    message = state.message,
+                    onMessageChange = { viewModel.updateMessage(it) },
+                    selectedAlgorithm = state.selectedAlgorithm,
+                    onAlgorithmChange = { viewModel.updateAlgorithm(it) },
+                    key = state.key,
+                    onKeyChange = { viewModel.updateKey(it) },
+                    algorithms = algorithms,
+                    affineA = state.affineA,
+                    onAffineAChange = { viewModel.updateAffineA(it) },
+                    affineB = state.affineB,
+                    onAffineBChange = { viewModel.updateAffineB(it) },
+                    onLoadSavedKey = {
+                        // Masquer le clavier avant d'afficher le dialog biométrique
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        biometricHelper.showBiometricPrompt(
+                            onSuccess = {
+                                viewModel.loadSavedKeys(state.selectedAlgorithm)
+                                viewModel.showLoadKeyDialog()
+                            },
+                            onError = { code, message ->
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    },
+                    isEncryption = true,
+                    onFocusChange = { isFocused ->
+                        isAnyFieldFocused = isFocused
+                        if (isFocused) {
+                            // Faire défiler pour rendre le champ visible quand il reçoit le focus
+                            // (ceci sera adapté dans le composant CryptoInputFields)
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        // Masquer le clavier lors du clic sur le bouton
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        viewModel.processCrypto(CryptoOperation.Encrypt)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(5.dp),
+                    enabled = when (state.selectedAlgorithm) {
+                        "Affine" -> !state.isLoading &&
+                                state.message.isNotEmpty() &&
+                                state.affineA != 0 &&
+                                areCoprimes(state.affineA, 26)
+                        "Cesar" -> !state.isLoading &&
+                                state.message.isNotEmpty() &&
+                                state.key.toIntOrNull() != null
+                        else -> !state.isLoading &&
+                                state.message.isNotEmpty() &&
+                                state.key.isNotEmpty()
+                    }
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Lancer le cryptage")
+                    }
                 }
-            )
+
+                CryptoResultCard(
+                    title = "Message crypté",
+                    result = state.result
+                )
+
+                CryptoActionButtons(
+                    onCopy = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("encrypted_message", state.result)
+                        clipboard.setPrimaryClip(clip)
+                        viewModel.showSnackbar("Message copié dans le presse-papiers")
+                    },
+                    onShare = {
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, state.result)
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Partager via"))
+                    },
+                    onClear = {
+                        viewModel.clearInputs()
+                        viewModel.showSnackbar("Contenu effacé")
+                    }
+                )
+
+                // Espace supplémentaire en bas pour assurer que tout le contenu est visible
+                // lorsque le clavier est affiché
+                Spacer(modifier = Modifier.height(100.dp))
+            }
         }
+
         if (showLoadKeyDialog) {
             SavedKeysDialog(
                 keys = savedKeys,
-                selectedAlgorithm = state.selectedAlgorithm,  // Ajout de l'algorithme sélectionné
+                selectedAlgorithm = state.selectedAlgorithm,
                 onDismiss = { viewModel.hideLoadKeyDialog() },
                 onKeySelected = { viewModel.loadSelectedKey(it) }
             )
         }
-
     }
 }

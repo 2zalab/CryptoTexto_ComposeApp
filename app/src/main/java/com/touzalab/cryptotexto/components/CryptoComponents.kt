@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Key
@@ -17,12 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -63,23 +66,31 @@ fun CryptoInputFields(
     key: String,
     onKeyChange: (String) -> Unit,
     algorithms: List<String>,
-    affineA: Int ,
+    affineA: Int,
     onAffineAChange: (Int) -> Unit,
     affineB: Int,
     onAffineBChange: (Int) -> Unit,
-    onLoadSavedKey: () -> Unit
+    onLoadSavedKey: () -> Unit,
+    isEncryption: Boolean,
+    onFocusChange: (Boolean) -> Unit = {} // Callback pour notifier le parent du changement de focus
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    // Label dynamique en fonction du mode
+    val messageLabel = if (isEncryption) "Message à crypter" else "Message à décrypter"
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Message input
+        // Message input avec label dynamique
         OutlinedTextField(
             value = message,
             onValueChange = onMessageChange,
-            label = { Text("votre Message à traiter") },
+            label = { Text(messageLabel) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                .height(120.dp)
+                .onFocusChanged { focusState ->
+                    onFocusChange(focusState.isFocused)
+                },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -103,7 +114,10 @@ fun CryptoInputFields(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor()
+                    .onFocusChanged { focusState ->
+                        onFocusChange(focusState.isFocused)
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -136,8 +150,11 @@ fun CryptoInputFields(
             affineA = affineA,
             onAffineAChange = onAffineAChange,
             affineB = affineB,
-            onAffineBChange = onAffineBChange
+            onAffineBChange = onAffineBChange,
+            isEncryption = isEncryption,
+            onFocusChange = onFocusChange
         )
+
         Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(
@@ -160,7 +177,7 @@ fun CryptoInputFields(
     }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CryptoKeyInput(
     selectedAlgorithm: String,
@@ -169,16 +186,22 @@ fun CryptoKeyInput(
     affineA: Int,
     onAffineAChange: (Int) -> Unit,
     affineB: Int,
-    onAffineBChange: (Int) -> Unit
+    onAffineBChange: (Int) -> Unit,
+    isEncryption: Boolean,
+    onFocusChange: (Boolean) -> Unit = {}
 ) {
+    // Préfixe pour le label de la clé
+    val keyLabelPrefix = if (isEncryption) "Clé de cryptage" else "Clé de décryptage"
+
     when (selectedAlgorithm) {
         "Affine" -> {
-            // Entrées pour le chiffrement affine
+            // Entrées pour le chiffrement affine avec clavier numérique
             Column {
                 OutlinedTextField(
-                    value = affineA.toString(),
-                    onValueChange = {
-                            newValue ->
+                    // Affiche une chaîne vide si affineA est 0, sinon affiche sa valeur
+                    value = if (affineA == 0) "" else affineA.toString(),
+                    //value = affineA.toString(),
+                    onValueChange = { newValue ->
                         // Permet la saisie vide temporaire pour faciliter l'édition
                         if (newValue.isEmpty()) {
                             onAffineAChange(0)
@@ -187,8 +210,13 @@ fun CryptoKeyInput(
                             newValue.toIntOrNull()?.let { onAffineAChange(it) }
                         }
                     },
-                    label = { Text("Paramètre a (doit être premier avec 26)") },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("$keyLabelPrefix - Paramètre a (doit être premier avec 26)") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            onFocusChange(focusState.isFocused)
+                        },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -198,19 +226,24 @@ fun CryptoKeyInput(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = affineB.toString(),
-                    onValueChange = {
-                            newValue ->
+                    // Affiche une chaîne vide si affineB est 0, sinon affiche sa valeur
+                    value = if (affineB == 0) "" else affineB.toString(),
+                    // value = affineB.toString(),
+                    onValueChange = { newValue ->
                         // Permet la saisie vide temporaire pour faciliter l'édition
-                        if (newValue.isEmpty()) {
-                            onAffineBChange(0)
+                        if (newValue.isEmpty()) { onAffineBChange(0)
                         } else {
                             // Essaie de convertir en nombre
                             newValue.toIntOrNull()?.let { onAffineBChange(it) }
                         }
                     },
-                    label = { Text("Paramètre b") },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("$keyLabelPrefix - Paramètre b") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            onFocusChange(focusState.isFocused)
+                        },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -221,21 +254,41 @@ fun CryptoKeyInput(
         else -> {
             // Champ de clé standard pour les autres algorithmes
             var showPassword by remember { mutableStateOf(false) }
+
+            // Détermination du type de clavier et du label en fonction de l'algorithme
+            val (keyboardType, keyLabel) = when (selectedAlgorithm) {
+                "Cesar" -> Pair(
+                    KeyboardType.Number,
+                    "$keyLabelPrefix (nombre)"
+                )
+                "Vigenère" -> Pair(
+                    KeyboardType.Text,
+                    "$keyLabelPrefix (mot clé)"
+                )
+                "XOR" -> Pair(
+                    KeyboardType.Ascii,
+                    keyLabelPrefix
+                )
+                "Transposition" -> Pair(
+                    KeyboardType.Text,
+                    "$keyLabelPrefix (mot clé pour la permutation)"
+                )
+                else -> Pair(
+                    KeyboardType.Text,
+                    keyLabelPrefix
+                )
+            }
+
             OutlinedTextField(
                 value = key,
                 onValueChange = onKeyChange,
-                label = { Text(when (selectedAlgorithm) {
-                    "Cesar" -> "Clé (nombre)"
-                    "Vigenère" -> "Mot clé"
-                    "XOR" -> "Clé"
-                    "Transposition" -> "Mot clé pour la permutation"
-                    else -> "Clé"
-                }) },
+                label = { Text(keyLabel) },
                 visualTransformation = if (showPassword) {
                     VisualTransformation.None
                 } else {
                     PasswordVisualTransformation()
                 },
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                 trailingIcon = {
                     IconButton(onClick = { showPassword = !showPassword }) {
                         Icon(
@@ -245,7 +298,11 @@ fun CryptoKeyInput(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        onFocusChange(focusState.isFocused)
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -362,7 +419,7 @@ fun CryptoActionButtons(
             Icon(
                 imageVector = Icons.Default.ContentCopy,
                 contentDescription = "Copier",
-                tint =MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 

@@ -68,6 +68,10 @@ fun HomeScreen(navController: NavController) {
                         navController.navigate(Screen.Decryption.route)
                         scope.launch { drawerState.close() }
                     },
+                    onNavigateToSecretKeys = {
+                        navController.navigate(Screen.SecretKeys.route)
+                        scope.launch { drawerState.close() }
+                    },
                     onRateApp = {
                         val intent = Intent(Intent.ACTION_VIEW).apply {
                             data = Uri.parse("market://details?id=${context.packageName}")
@@ -129,7 +133,7 @@ fun HomeScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
+                        .height(200.dp)
                 ) {
                     // Fond avec gradient et overlay
                     Box(
@@ -278,7 +282,7 @@ fun HomeScreen(navController: NavController) {
 
                     // Titre des opérations
                     Text(
-                        text = "CHOISIR L'OPERATION",
+                        text = "CHOISIR UNE OPERATION",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -305,11 +309,12 @@ fun HomeScreen(navController: NavController) {
                         onClick = { navController.navigate(Screen.Decryption.route) }
                     )
 
-                    Spacer(modifier = Modifier.height(50.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
 
                     Button(
                         onClick = {  navController.navigate(Screen.SecretKeys.route) },
                         modifier = Modifier
+                            .height(50.dp)
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(5.dp)
                     ) {
@@ -318,7 +323,7 @@ fun HomeScreen(navController: NavController) {
                             tint =  Color.White,
                             contentDescription = null
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(text = "Mes Clés Secrètes")
 
                     }
@@ -331,7 +336,8 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(0.dp, 0.dp, 0.dp, 10.dp)
+                    //.padding(bottom = 22.dp)
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
                     .height(50.dp),
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
@@ -356,6 +362,7 @@ fun HomeScreen(navController: NavController) {
 private fun DrawerContent(
     onNavigateToEncryption: () -> Unit,
     onNavigateToDecryption: () -> Unit,
+    onNavigateToSecretKeys: () -> Unit,
     onRateApp: () -> Unit,
     onOtherApps: () -> Unit,
     onShare: () -> Unit,
@@ -388,6 +395,12 @@ private fun DrawerContent(
             icon = Icons.Outlined.LockOpen,
             text = "Décrypter un message",
             onClick = onNavigateToDecryption
+        )
+
+        DrawerItem(
+            icon = Icons.Default.Fingerprint,
+            text = "Mes Clés secrètes",
+            onClick = onNavigateToSecretKeys
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
