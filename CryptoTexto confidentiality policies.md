@@ -1,88 +1,62 @@
-# Politique de Confidentialité de CryptoTexto
-
-*Dernière mise à jour : 21 février 2025*
+# Politique de Confidentialité - CryptoTexto
 
 ## Introduction
 
-Bienvenue dans la politique de confidentialité de CryptoTexto. Cette politique explique comment nous traitons vos informations dans notre application de cryptographie.
+Bienvenue dans la politique de confidentialité de CryptoTexto. Cette politique explique comment nous recueillons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre application mobile de cryptage de messages.
 
-## Collecte et Utilisation des Données
+## Informations collectées
 
-### Données Non Collectées
-CryptoTexto est conçue avec la confidentialité comme priorité absolue. Nous ne collectons pas :
-- Données personnelles
-- Informations de localisation
-- Données d'utilisation
-- Messages cryptés ou décryptés
-- Historique d'utilisation
-- Données de connexion
+CryptoTexto est conçue pour préserver votre confidentialité. Notre application :
 
-### Données Stockées Localement
-Les données suivantes sont stockées uniquement sur votre appareil :
-- Clés de chiffrement sauvegardées
-- Préférences de l'application
-- Paramètres utilisateur
+- **Ne collecte aucune donnée personnelle identifiable**
+- **Ne nécessite pas de création de compte**
+- **Ne suit pas votre localisation**
+- **N'accède pas à vos contacts**
+- **Ne collecte pas de données d'utilisation**
 
-Ces données sont stockées localement et ne quittent jamais votre appareil.
+Les seules informations stockées sont :
+- Les clés de cryptage que vous choisissez de sauvegarder localement sur votre appareil
+- Les fichiers d'export PDF/TXT que vous générez et enregistrez
 
-## Fonctionnement Hors Ligne
+Ces données sont stockées uniquement sur votre appareil et ne sont jamais transmises à nos serveurs ou à des tiers.
 
-CryptoTexto fonctionne entièrement hors ligne. L'application :
-- Ne nécessite pas de connexion Internet
-- Ne communique pas avec des serveurs externes
-- Ne synchronise pas de données avec le cloud
-- Ne partage aucune information avec des tiers
+## Utilisation des permissions
 
-## Sécurité des Données
+Notre application requiert certaines permissions pour fonctionner correctement :
 
-### Protection Locale
-- Authentification biométrique pour l'accès aux clés
-- Stockage chiffré des données sensibles
-- Effacement sécurisé des données temporaires
+- **Accès au stockage externe** : Uniquement pour sauvegarder les fichiers d'export que vous générez
+- **Biométrie** : Pour sécuriser l'accès à vos clés enregistrées via la reconnaissance d'empreinte digitale ou faciale
+- **Partage** : Pour permettre l'envoi de messages cryptés via d'autres applications
 
-### Export de Données
-- L'export des clés est effectué localement
-- Les fichiers exportés sont sous votre responsabilité
-- Aucune donnée n'est transmise lors de l'export
+## Sécurité des données
 
-## Permissions Requises
+La sécurité est au cœur de notre application :
 
-L'application demande uniquement les permissions nécessaires à son fonctionnement :
-- **Biométrie** : Pour l'authentification sécurisée
-- **Stockage** : Pour l'export des clés en PDF/TXT
+- Toutes les clés sont stockées localement en utilisant un stockage sécurisé
+- L'accès aux clés est protégé par authentification biométrique
+- Aucune donnée n'est transmise via Internet
+- L'application ne contient pas de publicités ni de trackers tiers
 
-## Protection des Mineurs
+## Partage avec des tiers
 
-CryptoTexto ne collecte aucune information personnelle et est adaptée à tous les âges.
+CryptoTexto ne partage aucune information avec des tiers. Lorsque vous utilisez la fonction de partage, vous choisissez explicitement la destination et le contenu à partager.
 
-## Modifications de la Politique
+## Stockage et suppression des données
 
-Nous nous réservons le droit de modifier cette politique de confidentialité. Les utilisateurs seront informés des changements via les mises à jour de l'application.
+Toutes les données sont stockées localement sur votre appareil. Vous pouvez supprimer ces données à tout moment en :
+- Supprimant individuellement vos clés enregistrées
+- Effaçant les données de l'application dans les paramètres de votre appareil
+- Désinstallant l'application
 
-## Suppression des Données
+## Changements à cette politique
 
-Pour supprimer vos données :
-1. Supprimez les clés sauvegardées dans l'application
-2. Désinstallez l'application
-3. Supprimez les fichiers exportés manuellement
+Nous pouvons mettre à jour notre politique de confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle politique de confidentialité sur cette page et en mettant à jour la date de "dernière mise à jour".
 
 ## Contact
 
-Pour toute question concernant cette politique de confidentialité :
-- Email : contact@2zalab.com
-- Site web : https://2zalab.com
+Si vous avez des questions concernant cette politique de confidentialité, n'hésitez pas à nous contacter à :
+- Email : contact@touzalab.com
 
-## Consentement
+## Dernière mise à jour
 
-En utilisant CryptoTexto, vous acceptez cette politique de confidentialité.
-
-## Conformité Légale
-
-Cette application est conforme au :
-- Règlement Général sur la Protection des Données (RGPD)
-- California Consumer Privacy Act (CCPA)
-- Protection des données personnelles
-
----
-
-*Cette politique de confidentialité a été mise à jour pour la dernière fois le 21 février 2025.*
+Cette politique de confidentialité a été mise à jour le 14 mars 2025.
